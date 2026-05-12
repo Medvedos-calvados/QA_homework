@@ -11,14 +11,14 @@ driver = webdriver.Chrome(options=options)
 driver.implicitly_wait(10)
 
 try:
-    # 2. Заходим на главную страницу (ту, что на твоем скрине)
+    # 2. Заходим на главную страницу 
     driver.get("http://uitestingplayground.com")
     
     # 3. Сами находим ссылку на нужное задание и кликаем по ней
     link = driver.find_element(By.LINK_TEXT, "Dynamic ID")
     link.click()
     
-    # Даем секунду подгрузиться
+    # Даем подгрузиться
     time.sleep(2)
     
     # 4. Теперь ищем синюю кнопку по тексту

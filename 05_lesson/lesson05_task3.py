@@ -6,14 +6,13 @@ import time
 driver = webdriver.Firefox()
 
 try:
-    # 2. ПЕРЕХОДИМ ПО ССЫЛКЕ ИЗ ЗАДАНИЯ
-    # Важно: адрес должен быть именно таким, с "the-internet"
+    # 2. Переходим на страницу 
     driver.get("http://the-internet.herokuapp.com/inputs")
     
-    # Даем странице 3-5 секунд на загрузку (если интернет медленный)
+    # Даем странице 3-5 секунд на загрузку
     time.sleep(5)
     
-    # 3. Находим поле ввода (тег input)
+    # 3. Находим поле ввода
     input_field = driver.find_element(By.TAG_NAME, "input")
     
     # 4. Вводим текст 12345
