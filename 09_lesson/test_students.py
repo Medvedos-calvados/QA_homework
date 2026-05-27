@@ -2,17 +2,13 @@ import pytest
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-
-# подключение к базе данных
+# 1. Подключение к БД 
 DATABASE_URL = "postgresql://postgres:1111@localhost:5432/QA_NATA"
-
-# Настройка SQLAlchemy
 engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
-Session = sessionmaker(bind=engine)
 
-
-# Структура таблицы "student"
+# 2. Модель таблицы
 class Student(Base):
     __tablename__ = "student"
 
@@ -22,75 +18,67 @@ class Student(Base):
     subject_id = Column(Integer)
 
 
-# --- ТЕСТЫ ---
-
-
-# Тест 1: Добавление студента
-def test_add_student():
-    session = Session()
-
-    
-    new_student = Student(
-        user_id=9999,
-        level="Бакалавриат",
-        education_form="Очная",
-        subject_id=1,
-    )
-    session.add(new_student)
-    session.commit()
-
-    # ПРОВЕРКА: ищем добавленного студента в БД
-    student_in_db = session.query(Student).filter_by(user_id=9999).first()
-    assert student_in_db is not None
-    assert student_in_db.level == "Бакалавриат"
-
-    # ОЧИСТКА ЗА СОБОЙ 
-    session.delete(student_in_db)
-    session.commit()
+# 3. Фикстура для автоматической очистки данных 
+@pytest.fixture
+def db_session():
+    session = SessionLocal()
+    yield session
+    # После каждого теста откатываем изменения и закрываем сессию
+    session.rollback()
     session.close()
 
 
-# Тест 2: Изменение данных студента
-def test_update_student():
-    session = Session()
+# ==================== ТЕСТЫ ====================
 
-    # Создаем данные для теста
-    student = Student(
-        user_id=9998, level="Магистратура", education_form="Заочная", subject_id=2
-    )
-    session.add(student)
-    session.commit()
+# Тест 1: Добавление сущности (Student)
+def test_add_student(db_session):
+    # Создаем объект нового студента (id=999, которого нет в БД)
+    new_student = Student(user_id=999, level="Начальный", education_form="Онлайн", subject_id=1)
+    
+    db_session.add(new_student)
+    db_session.commit()  # Сохраняем в базу
+
+    # Проверяем, что студент успешно добавился
+    db_student = db_session.query(Student).filter_by(user_id=999).first()
+    assert db_student is not None
+    assert db_student.level == "Начальный"
+
+    # Очистка: удаляем созданного студента
+    db_session.delete(db_student)
+    db_session.commit()
+
+
+# Тест 2: Изменение сущности (Student)
+def test_update_student(db_session):
+    # Сначала создаем студента для теста
+    student = Student(user_id=998, level="Средний", education_form="Оффлайн", subject_id=2)
+    db_session.add(student)
+    db_session.commit()
 
     # Изменяем форму обучения
-    student.education_form = "Очно-заочная"
-    session.commit()
+    student.education_form = "Вечерняя"
+    db_session.commit()
 
-    # ПРОВЕРКА: смотрим изменения в БД
-    updated_student = session.query(Student).filter_by(user_id=9998).first()
-    assert updated_student.education_form == "Очно-заочная"
+    # Проверяем, что изменения применились
+    updated_student = db_session.query(Student).filter_by(user_id=998).first()
+    assert updated_student.education_form == "Вечерняя"
 
-    # ОЧИСТКА ЗА СОБОЙ
-    session.delete(updated_student)
-    session.commit()
-    session.close()
+    # Очистка: удаляем за собой данные
+    db_session.delete(updated_student)
+    db_session.commit()
 
 
-# Тест 3: Удаление студента
-def test_delete_student():
-    session = Session()
+# Тест 3: Удаление сущности (Student)
+def test_delete_student(db_session):
+    # Сначала создаем студента, которого будем удалять
+    student = Student(user_id=997, level="Продвинутый", education_form="Онлайн", subject_id=3)
+    db_session.add(student)
+    db_session.commit()
 
-    # Создаем временного студента
-    student = Student(
-        user_id=9997, level="Аспирантура", education_form="Очная", subject_id=3
-    )
-    session.add(student)
-    session.commit()
+    # Удаляем его из базы
+    db_session.delete(student)
+    db_session.commit()
 
-    # Удаляем его из БД
-    session.delete(student)
-    session.commit()
-
-    # ПРОВЕРКА: проверяем, что его больше нет в базе
-    deleted_student = session.query(Student).filter_by(user_id=9997).first()
+    # Проверяем, что его больше нет в БД
+    deleted_student = db_session.query(Student).filter_by(user_id=997).first()
     assert deleted_student is None
-    session.close()
