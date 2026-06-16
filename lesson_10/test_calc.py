@@ -5,10 +5,9 @@ from calc_page import CalcPage
 
 
 @pytest.fixture
-def driver_calc():
-    """Фикстура для инициализации браузера Firefox для тестов калькулятора."""
-    browser = webdriver.Firefox()
-    browser.implicitly_wait(10)
+def driver():
+    """Фикстура для инициализации и закрытия браузера Chrome."""
+    browser = webdriver.Chrome()
     yield browser
     browser.quit()
 
@@ -17,22 +16,24 @@ def driver_calc():
 @allure.description("Тест проверяет операцию сложения 7 + 8 с задержкой")
 @allure.feature("Калькулятор")
 @allure.severity(allure.severity_level.NORMAL)
-def test_calculator_sum(driver_calc):
-    """Тест проверяет сложение чисел с выставленной задержкой."""
-    calc_page = CalcPage(driver_calc)
+def test_slow_calculator(driver):
+    """Тест проверяет сложение чисел с выставленной задержкой анимации."""
+    page = CalcPage(driver)
 
     with allure.step("Открыть страницу калькулятора"):
-        calc_page.open()
+        page.open()
 
-    with allure.step("Установить задержку вычислений в 45 секунд"):
-        calc_page.set_delay("45")
+    with allure.step("Ввести 45 в поле задержки над калькулятором"):
+        page.set_delay("45")
 
-    with allure.step("Ввести математическое выражение '7 + 8 ='"):
-        calc_page.click_button("7")
-        calc_page.click_button("+")
-        calc_page.click_button("8")
-        calc_page.click_button("=")
+    with allure.step("Нажать кнопки '7', '+', '8', '='"):
+        page.click_button("7")
+        page.click_button("+")
+        page.click_button("8")
+        page.click_button("=")
 
     with allure.step("Дождаться результата и проверить, что он равен 15"):
-        result = calc_page.get_result_text()
-        assert result == "15", f"Ожидалось 15, но калькулятор показал {result}"
+        final_result = page.get_result_text()
+        assert final_result == "15", (
+            f"Ошибка! Ожидали 15, а на табло видим {final_result}"
+        )

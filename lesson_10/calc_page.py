@@ -11,7 +11,7 @@ class CalcPage:
         """Инициализирует страницу калькулятора с веб-драйвером."""
         self.driver = driver
         self.url = (
-            "https://bonigarcia.dev/selenium-webdriver-java/"
+            "https://bonigarcia.dev"
             "slow-calculator.html"
         )
 
@@ -49,7 +49,6 @@ class CalcPage:
         """
         result_screen = (By.CLASS_NAME, "screen")
 
-        # Ждем 45 секунд появления числа 15 (явное ожидание вместо sleep)
         WebDriverWait(self.driver, 45).until(
             EC.text_to_be_present_in_element(result_screen, "15")
         )
