@@ -1,48 +1,40 @@
 import allure
 import pytest
 from selenium import webdriver
-from pages import LoginPage, MainPage, CartPage, CheckoutPage, OverviewPage
+from calc_page import CalcPage
 
 
 @pytest.fixture
 def driver():
-    # Используем Firefox, как в вашем оригинальном коде
-    browser = webdriver.Firefox()
-    browser.implicitly_wait(10)
-    browser.get("https://saucedemo.com")
+    """Фикстура для инициализации и закрытия браузера Chrome."""
+    browser = webdriver.Chrome()
     yield browser
-    # Закрываем браузер СРАЗУ после выполнения шагов
+    # Закрываем браузер СРАЗУ после получения результата
     browser.quit()
 
 
-@allure.title("Проверка итоговой суммы заказа в магазине")
-@allure.description("Тест проверяет сквозной сценарий покупки товаров")
-@allure.feature("Оформление заказа (Checkout)")
-@allure.severity(allure.severity_level.CRITICAL)
-def test_shop_total(driver):
-    # Создаем объекты всех страниц
-    login_page = LoginPage(driver)
-    main_page = MainPage(driver)
-    cart_page = CartPage(driver)
-    checkout_page = CheckoutPage(driver)
-    overview_page = OverviewPage(driver)
+@allure.title("Проверка работы медленного калькулятора")
+@allure.description("Тест проверяет операцию сложения 7 + 8 с задержкой")
+@allure.feature("Калькулятор")
+@allure.severity(allure.severity_level.NORMAL)
+def test_slow_calculator(driver):
+    """Тест проверяет сложение чисел с выставленной задержкой анимации."""
+    page = CalcPage(driver)
 
-    with allure.step("Авторизоваться под стандартным пользователем"):
-        login_page.login("standard_user", "secret_sauce")
+    with allure.step("Открыть страницу калькулятора"):
+        page.open()
 
-    with allure.step("Добавить 3 конкретных товара в корзину"):
-        main_page.add_products()
+    with allure.step("Ввести 45 в поле задержки над калькулятором"):
+        page.set_delay("45")
 
-    with allure.step("Перейти в корзину и нажать кнопку Checkout"):
-        main_page.go_to_cart()
-        cart_page.checkout()
+    with allure.step("Нажать кнопки '7', '+', '8', '='"):
+        page.click_button("7")
+        page.click_button("+")
+        page.click_button("8")
+        page.click_button("=")
 
-    with allure.step("Заполнить форму покупателя данными"):
-        checkout_page.fill_form("Наталья", "Медведева", "123456")
-
-    with allure.step("Проверить, что итоговая стоимость совпадает"):
-        final_total = overview_page.get_total()
-        expected_price = "Total: $58.29"
-        assert final_total == expected_price, (
-            f"Ошибка! Ожидали {expected_price}, но получили {final_total}"
+    with allure.step("Дождаться результата и проверить, что он равен 15"):
+        final_result = page.get_result_text()
+        assert final_result == "15", (
+            f"Ошибка! Ожидали 15, а на табло видим {final_result}"
         )
